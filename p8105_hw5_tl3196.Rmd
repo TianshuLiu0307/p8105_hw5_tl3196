@@ -9,8 +9,8 @@ library(tidyverse)
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
-  fig.width = 6,
-  fig.asp = .6,
+	message = FALSE, 
+  dpi = 300,
   out.width = "90%"
 )
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
@@ -22,3 +22,54 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
+## Problem 1
+
+Import and tidy data from csv files.
+
+```{r import_tidy_data}
+# generate file list
+file_path = "./data/con_exp_data/"
+file_list = list.files(path = file_path, full.names = FALSE)
+
+# import and tidy data
+con_exp_df =
+  expand_grid(
+    sample = file_list
+  ) %>% 
+  mutate(
+    data = purrr::map(
+      .x = file_list, 
+      ~read_csv(file = str_c(file_path, .x))),
+    sample = str_sub(sample, end = -5)
+  ) %>% 
+   separate(
+     col = sample, sep = '_', 
+     into = c("arm", "id"),
+     remove = FALSE
+  ) %>% 
+  unnest(data) %>% 
+  pivot_longer(
+    cols = week_1:week_8,
+    names_to = "week",
+    names_prefix = "week_",
+    values_to = "observation"
+  )
+
+con_exp_df
+```
+
+Make a spaghetti plot for the tidy data.
+
+```{r spaghetti_plot}
+# spaghetti plot
+con_exp_df %>% 
+  ggplot(aes(x = week, y = observation, group = sample, color = sample)) + 
+  geom_point(aes(shape = arm), alpha = .7) + 
+  geom_line(aes(linetype = arm), alpha = .7)
+```
+
+From the plot, we can identify that there are not significant difference between participants in the two arms at the beginning of the study. 
+Participants in the experimental arm have significant increasing trend on observations, while participants in the control arm almost remain the same as the beginning. 
+With this trend, the difference between the two arms becomes more and more significant. 
+From the 7th week, all participants in the experimental arm have higher observation than all participants in the control arm.
+Therefore, compared to the control arm, the experimental arm has significant increase in observations.
