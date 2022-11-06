@@ -73,3 +73,66 @@ Participants in the experimental arm have significant increasing trend on observ
 With this trend, the difference between the two arms becomes more and more significant. 
 From the 7th week, all participants in the experimental arm have higher observation than all participants in the control arm.
 Therefore, compared to the control arm, the experimental arm has significant increase in observations.
+
+## Problem 2
+
+Import data from `homicide-data.csv`.
+
+```{r import_data}
+homicide_df = read_csv("./data/homicide-data.csv")
+homicide_df
+```
+
+The raw homicide dataset collected by the Washington Post covers ``r nrow(homicide_df)`` homicide cases in 50 large U.S. cities. Each homicide case is described by ``r ncol(homicide_df)`` variables, including ``r colnames(homicide_df)``. The variables are shown in the table below.
+
+```{r data_description, echo = FALSE}
+col_names = colnames(homicide_df)
+col_types = c()
+for (col in col_names){
+  col_types = c(col_types, class(pull(homicide_df, col)))
+}
+description = c(
+  "case id",
+  "date of the homicide being reported",
+  "last name of the victim",
+  "first name of the victim",
+  "race of the victim",
+  "age of the victim",
+  "gender of the victim",
+  "city of the homicide",
+  "state of the homicide",
+  "latitude of the homicide's location",
+  "longtitude of the homicide's location",
+  "current arresting condition"
+)
+
+knitr::kable(
+  tibble(col_names, col_types, description)
+)
+```
+
+
+```{r city_state}
+homicide_df = 
+  homicide_df %>% mutate(city_state = str_c(city, ", ", state))
+
+homicide_df
+```
+
+```{r summarize_by_city}
+# summarize total number of homicide by cities
+homicide_df %>% 
+  group_by(city) %>% 
+  summarise(
+    n_homicide = n()
+  )
+
+# summarize number of unsolved homicide by cities
+homicide_df %>% 
+  filter(disposition %in% c("Closed without arrest", "Open/No arrest")) %>% 
+  group_by(city) %>% 
+  summarise(
+    n_unsolved = n()
+  ) 
+```
+
