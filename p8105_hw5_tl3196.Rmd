@@ -136,3 +136,79 @@ homicide_df %>%
   ) 
 ```
 
+Estimate the proportion unsolved homicides in Baltimore
+
+```{r balt_prop_test}
+balt_n_total = 
+  homicide_df %>% 
+  filter(city == "Baltimore") %>% 
+  count() %>% 
+  as.numeric()
+
+balt_n_unsolved = 
+  homicide_df %>% 
+  filter(
+    city == "Baltimore",
+    disposition %in% c("Closed without arrest", "Open/No arrest")
+  ) %>% 
+  count() %>% 
+  as.numeric()
+
+balt_prop = prop.test(x = balt_n_unsolved, n = balt_n_total, conf.level = 0.95) 
+balt_prop_df = 
+  balt_prop %>% 
+  broom::tidy()
+
+estimate = pull(balt_prop_df, estimate)
+conf_low = pull(balt_prop_df, conf.low)
+conf_high = pull(balt_prop_df, conf.high)
+
+tibble(
+  city = "Baltimore",
+  estimate, 
+  ci = str_c("(", conf_low, ", ", conf_high, ")")
+)
+```
+
+Iterate prop test for each city
+
+```{r prop_test}
+# iterate prop test for each city
+prop_result_df = 
+  homicide_df %>% 
+  group_by(city) %>% 
+  summarise(
+    n_homicide = n(),
+    n_unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
+  ) %>% 
+  mutate(
+    test_result = purrr::map2(.x = n_unsolved, .y = n_homicide, 
+                              ~prop.test(x = .x, n = .y, conf.level = 0.95) %>% broom::tidy())
+  ) %>% 
+  unnest(test_result) %>% 
+  mutate(
+    ci = str_c("(", conf.low, ", ", conf.high, ")")
+  ) %>% 
+  select(city, estimate,conf.low, conf.high, ci)
+
+prop_result_df
+```
+
+```{r plot}
+# plot estimated and CIs for each city
+prop_result_df %>% 
+  mutate(
+    city = fct_reorder(city, estimate)
+  ) %>% 
+  ggplot(aes(x = city, y = estimate, color = city)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) + 
+  theme(legend.position = "none") + 
+  theme(axis.text.x = element_text(size=6, angle=45, hjust = 1)) + 
+  labs(
+    x = "City",
+    y = "Estimated Proportion",
+    title = "Estimated Proportions and CIs of Unsloved Homicides for Cities"
+  )
+```
+
