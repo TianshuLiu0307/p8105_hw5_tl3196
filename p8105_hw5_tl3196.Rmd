@@ -173,10 +173,20 @@ tibble(
 Iterate prop test for each city
 
 ```{r prop_test}
+# check cities
+homicide_df %>% 
+  distinct(city_state, city) %>% 
+  count(city) %>% 
+  arrange(desc(n))
+
+# There are TWO Tulsa's in two different state!!
+# solution: exclude the Tulsa in AL
+
 # iterate prop test for each city
 prop_result_df = 
   homicide_df %>% 
-  group_by(city) %>% 
+  group_by(city_state) %>% 
+  filter(city_state != "Tulsa, AL") %>% 
   summarise(
     n_homicide = n(),
     n_unsolved = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
@@ -189,7 +199,7 @@ prop_result_df =
   mutate(
     ci = str_c("(", conf.low, ", ", conf.high, ")")
   ) %>% 
-  select(city, estimate,conf.low, conf.high, ci)
+  select(city_state, estimate,conf.low, conf.high, ci)
 
 prop_result_df
 ```
@@ -198,9 +208,9 @@ prop_result_df
 # plot estimated and CIs for each city
 prop_result_df %>% 
   mutate(
-    city = fct_reorder(city, estimate)
+    city_state = fct_reorder(city_state, estimate)
   ) %>% 
-  ggplot(aes(x = city, y = estimate, color = city)) + 
+  ggplot(aes(x = city_state, y = estimate, color = city_state)) + 
   geom_point() + 
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) + 
   theme(legend.position = "none") + 
@@ -287,6 +297,7 @@ stat_data
 ```
 
 Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true mu on the x axis
+
 ```{r power_vs_mu_plot}
 stat_data %>% 
   ggplot(aes(x = mu, y = proportion, color = mu)) + 
