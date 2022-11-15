@@ -40,7 +40,7 @@ con_exp_df =
     data = purrr::map(
       .x = file_list, 
       ~read_csv(file = str_c(file_path, .x))),
-    sample = str_sub(sample, end = -5)
+    sample = str_replace(sample, ".csv", "")
   ) %>% 
    separate(
      col = sample, sep = '_', 
@@ -345,4 +345,9 @@ all_avg_mu %>%
   )
 ```
 
+From the plot above, we can conclude that the average $\hat{\mu}$ of the total simulation dataset always approaches the true mean in value. 
+The average $\hat{\mu}$ increases as the true mean (effect size) increases, and thus it presents almost a linear relationship between average $\hat{\mu}$ and the true mean.
 
+The average $\hat{\mu}$ only in samples for which the null was rejected does not have such simple linear relationship. In the samples with small true mean, i.e. mu = 1, 2, the average $\hat{\mu}$ in samples rejecting the null is obviously higher than both the true mean and the average $\hat{\mu}$ of all samples. As the true mean (effect size) continues increasing, the average $\hat{\mu}$ in samples rejecting the null gradually approaches the true mean and the average $\hat{\mu}$ of all samples. 
+
+This is because as true mean increases, the proportion of rejecting the null also increases. When taking sample average of $\hat{\mu}$ across tests for which the null is rejected, if the true mean is small, there will be a low proportion of rejecting the null, thus the average $\hat{\mu}$ among these rejecting samples can be away from the true mean; if the true mean is large, there will be a much higher proportion of rejecting the null, making the sample average of $\hat{\mu}$ across tests for which the null is rejected approximately equal to the true $\mu$.
